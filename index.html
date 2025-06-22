@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>箱入り娘</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(4, 60px);
+      grid-template-rows: repeat(5, 60px);
+      gap: 2px;
+      margin: 20px auto;
+      width: max-content;
+      border: 4px solid #444;
+      padding: 2px;
+      background: #eee;
+      position: relative;
+    }
+    .block {
+      background: #ccc;
+      border: 1px solid #999;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    #exit {
+      position: absolute;
+      width: 120px;
+      height: 4px;
+      background: red;
+      bottom: -6px;
+      left: 61px;
+      text-align: center;
+      color: red;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    #message {
+      font-size: 1.2em;
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>箱入り娘</h1>
+  <p>※ ブロックを選んで、キーボードの矢印キーで移動できます</p>
+  <div id="board">
+    <div id="exit">出口</div>
+  </div>
+  <div id="message"></div>
+
+  <script>
+    const board = document.getElementById('board');
+    const message = document.getElementById('message');
+
+    const blocks = [
+      { id: 'A', x: 1, y: 0, w: 2, h: 2, label: '娘' },
+      { id: 'B', x: 0, y: 0, w: 1, h: 2, label: '番頭' },
+      { id: 'C', x: 3, y: 0, w: 1, h: 2, label: '番頭' },
+      { id: 'D', x: 0, y: 2, w: 1, h: 2, label: '腰元' },
+      { id: 'E', x: 3, y: 2, w: 1, h: 2, label: '腰元' },
+      { id: 'F', x: 1, y: 2, w: 2, h: 1, label: '父' },
+      { id: 'G', x: 1, y: 3, w: 1, h: 1, label: '番犬' },
+      { id: 'H', x: 2, y: 3, w: 1, h: 1, label: '番犬' },
+      { id: 'I', x: 0, y: 4, w: 1, h: 1, label: '門番' },
+      { id: 'J', x: 3, y: 4, w: 1, h: 1, label: '門番' },
+    ];
+
+    let selectedId = null;
+
+    function render() {
+      board.querySelectorAll('.block').forEach(el => el.remove());
+      message.textContent = '';
+      for (const b of blocks) {
+        const div = document.createElement('div');
+        div.className = 'block';
+        div.style.gridColumn = `${b.x + 1} / span ${b.w}`;
+        div.style.gridRow = `${b.y + 1} / span ${b.h}`;
+        div.textContent = b.label || b.id;
+        if (selectedId === b.id) div.style.background = '#faa';
+        div.onclick = () => {
+          selectedId = b.id;
+          render();
+        };
+        board.appendChild(div);
+      }
+      checkWin();
+    }
+
+    function isFree(x, y, w, h, ignoreId) {
+      if (x < 0 || y < 0 || x + w > 4 || y + h > 5) return false;
+      for (const b of blocks) {
+        if (b.id === ignoreId) continue;
+        if (
+          x < b.x + b.w &&
+          x + w > b.x &&
+          y < b.y + b.h &&
+          y + h > b.y
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function moveSelected(dx, dy) {
+      if (!selectedId) return;
+      const block = blocks.find(b => b.id === selectedId);
+      const nx = block.x + dx;
+      const ny = block.y + dy;
+      if (isFree(nx, ny, block.w, block.h, block.id)) {
+        block.x = nx;
+        block.y = ny;
+        render();
+      }
+    }
+
+    function checkWin() {
+      const a = blocks.find(b => b.id === 'A');
+      if (a.x === 1 && a.y === 3) {
+        message.textContent = '🎉 クリア！おめでとうございます！（娘が出口に到達）';
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp': moveSelected(0, -1); break;
+        case 'ArrowDown': moveSelected(0, 1); break;
+        case 'ArrowLeft': moveSelected(-1, 0); break;
+        case 'ArrowRight': moveSelected(1, 0); break;
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
